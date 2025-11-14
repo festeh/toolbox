@@ -9,8 +9,10 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
+var mainWindow *gtk.ApplicationWindow
+
 // CreateMainWindow creates and shows the main application window
-func CreateMainWindow(app *gtk.Application) {
+func CreateMainWindow(app *gtk.Application, showChan, quitChan chan bool) {
 	// Load CSS
 	LoadCSS()
 
@@ -31,10 +33,11 @@ func CreateMainWindow(app *gtk.Application) {
 	mainBox.Append(tableView.Container)
 
 	// Create window
-	window := gtk.NewApplicationWindow(app)
-	window.SetTitle("Toolbox")
-	window.SetDefaultSize(900, 600)
-	window.SetChild(mainBox)
+	mainWindow = gtk.NewApplicationWindow(app)
+	mainWindow.SetTitle("Toolbox")
+	mainWindow.SetDefaultSize(900, 600)
+	mainWindow.SetChild(mainBox)
+	mainWindow.SetHideOnClose(true) // Hide instead of destroying
 
 	// Add keyboard event handler with capture phase to intercept before search input
 	evtController := gtk.NewEventControllerKey()
@@ -55,14 +58,31 @@ func CreateMainWindow(app *gtk.Application) {
 		}
 		return false // Allow other keys to propagate
 	})
-	window.AddController(evtController)
+	mainWindow.AddController(evtController)
 
-	window.Show()
+	// Handle tray show/hide events
+	go func() {
+		for {
+			select {
+			case show := <-showChan:
+				if show {
+					mainWindow.Present()
+				} else {
+					mainWindow.Hide()
+				}
+			case <-quitChan:
+				app.Quit()
+				return
+			}
+		}
+	}()
+
+	mainWindow.Show()
 }
 
 // Run starts the GTK application
-func Run() int {
+func Run(showChan, quitChan chan bool) int {
 	app := gtk.NewApplication("com.example.toolbox", gio.ApplicationFlagsNone)
-	app.ConnectActivate(func() { CreateMainWindow(app) })
+	app.ConnectActivate(func() { CreateMainWindow(app, showChan, quitChan) })
 	return app.Run(nil)
 }
