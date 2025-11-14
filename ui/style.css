@@ -83,9 +83,16 @@ entry selection {
 }
 
 .table-row {
-    border-bottom: 1px solid @surface0;
     padding: 4px 8px;
     min-height: 32px;
+}
+
+.table-row-even {
+    background-color: @base;
+}
+
+.table-row-odd {
+    background-color: @mantle;
 }
 
 .table-row:hover {
@@ -95,6 +102,12 @@ entry selection {
 .table-cell {
     color: @text;
     padding: 4px 8px;
+}
+
+.id-cell {
+    color: @lavender;
+    font-weight: bold;
+    font-family: monospace;
 }
 
 /* Optional: Style for any buttons you might add later */
